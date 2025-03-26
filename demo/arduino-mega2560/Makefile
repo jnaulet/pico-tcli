@@ -1,42 +1,38 @@
-# 1st: sources & targets
-target := demo_tcli.elf
+target := demo.elf
 
-c_src-y += main.c
-c_src-y += arduino-mega2560.c
-
+-include picoRTOS/Makefile.in
 -include ../../Makefile.in
 
-# avoid double-inclusion
-ifneq ($(skip-makefile),1)
-PWD := $(shell pwd)
-KBUILD_SRC := ../../../OpenPicoRTOS-dev
-TTY ?= /dev/ttyACM0
+CC  := avr-gcc
+SRC := $(c_src-y) $(a_src-y)
 
-hex := $(target:%.elf=%.hex)
+SRC += arduino-mega2560.c
+SRC += main.c
 
-all: $(target) $(hex)
-	@
+OBJ := $(SRC:%.c=%.o)
+OBJ := $(OBJ:%.S=%.o)
 
-$(target): FORCE
-	$(Q)$(MAKE) -C $(KBUILD_SRC) O=$(PWD)
+CFLAGS := -I. -Iinclude $(include-y) -ffunction-sections -fdata-sections
+CFLAGS += -fpack-struct -fshort-enums -Wno-address -mmcu=atmega2560 -D__ATmega2560__
+CFLAGS += -flto -fno-fat-lto-objects
+CFLAGS += -D'__ATTRIBUTE_PACKED__=__attribute__((packed))'
+CFLAGS += -D'__ATTRIBUTE_NAKED__=__attribute__((naked))'
+CFLAGS += -D'__ATTRIBUTE_ALIGNED__(x)=__attribute__((aligned(x)))'
+CFLAGS += -DTCLI_COMPLETE=0
 
-$(hex): $(target)
-	avr-objcopy -O ihex -R .eeprom $< $@
+AFLAGS := -Iinclude $(include-y) -x assembler-with-cpp -mmcu=atmega2560 -D__ATmega2560__ -flto
+LDFLAGS := -fuse-linker-plugin -Wl,--gc-sections -mmcu=atmega2560 -D__ATmega2560__ -lm -flto
 
-upload: $(hex)
-	avrdude -v -patmega2560 -cwiring -P$(TTY) \
-	-b115200 -D -Uflash:w:$<:i
+all: $(target)
 
-clean: FORCE
-	$(Q)$(MAKE) -C $(KBUILD_SRC) O=$(PWD) $@
-	@rm -f $(target) $(hex) *.map
+$(target): $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o $@ $(LDFLAGS)
 
-%:
-	$(Q)$(MAKE) -C $(KBUILD_SRC) O=$(PWD) $@
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-PHONY += FORCE upload
-FORCE:
+%.o: %.S
+	$(CC) $(AFLAGS) -c $< -o $@
 
-.PHONY: $(PHONY)
-
-endif
+clean:
+	rm -f $(OBJ) $(target)
