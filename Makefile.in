@@ -1,0 +1,10 @@
+#
+# picoRTOS TCLI library
+#
+# How tu use:
+# -include /path/to/pico-tcli/Makefile.in
+#
+tcli-path := $(dir $(lastword $(MAKEFILE_LIST)))
+
+c_src-y   += $(tcli-path)tcli.c
+include-y += -I$(tcli-path)
