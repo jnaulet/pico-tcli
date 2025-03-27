@@ -52,14 +52,14 @@ static int cmd_help(void *arg)
 
 static int cmd_load(void *arg)
 {
-  tcli_out_cb(arg, "Configuration loaded to RAM\r\n");
-  return 0;
+    tcli_out_cb(arg, "Configuration loaded to RAM\r\n");
+    return 0;
 }
 
 static int cmd_display(void *arg)
 {
-  tcli_out_cb(arg, "Empty\r\n");
-  return 0;
+    tcli_out_cb(arg, "Empty\r\n");
+    return 0;
 }
 
 static int cmd_set(void *arg, int argc, const char **argv)
@@ -80,8 +80,8 @@ static int cmd_set(void *arg, int argc, const char **argv)
 
 static int cmd_save(void *arg)
 {
-  tcli_out_cb(arg, "Configuration saved to EEPROM\r\n");
-  return 0;
+    tcli_out_cb(arg, "Configuration saved to EEPROM\r\n");
+    return 0;
 }
 
 int tcli_exec_cb(void *arg, int argc, const char **argv)
