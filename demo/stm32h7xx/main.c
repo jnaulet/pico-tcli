@@ -15,13 +15,13 @@ static void led_main(void *priv)
     picoRTOS_tick_t ref = picoRTOS_get_tick();
 
     for (;;) {
-        gpio_write(LED, true);
-        picoRTOS_sleep(PICORTOS_DELAY_MSEC(60ul));
         gpio_write(LED, false);
         picoRTOS_sleep(PICORTOS_DELAY_MSEC(60ul));
         gpio_write(LED, true);
+        picoRTOS_sleep(PICORTOS_DELAY_MSEC(60ul));
+        gpio_write(LED, false);
         picoRTOS_sleep(PICORTOS_DELAY_MSEC(120ul));
-        gpio_write(LED, false);
+        gpio_write(LED, true);
 
         /* until next second */
         picoRTOS_sleep_until(&ref, PICORTOS_DELAY_SEC(1));
@@ -33,29 +33,25 @@ void tcli_sigint_cb(void *arg)
     tcli_out_cb(arg, "^C\r\n");
 }
 
+static int cmd_help(void *arg)
+{
+    tcli_out_cb(arg, "Help\r\n");
+    tcli_out_cb(arg, "Supported list of commands:\r\n");
+    tcli_out_cb(arg, " help   : displays this message\r\n");
+    tcli_out_cb(arg, " load   : loads the configuration from EEPROM\r\n");
+    tcli_out_cb(arg, " display: displays the current configuration\r\n");
+    tcli_out_cb(arg, " set    : modifies a parameter. Available parameters are:\r\n");
+    tcli_out_cb(arg, "          board_id [0-7]  : the current board identifier\r\n");
+    tcli_out_cb(arg, "          pwr_sel_in [0-1]: the default power-in selection\r\n");
+    tcli_out_cb(arg, " save   : saves the configuration to EEPROM\r\n");
+    tcli_out_cb(arg, "\r\n");
+}
+
 static int cmd_set(void *arg, int argc, const char **argv)
 {
-  char c = '0' + argc;
-
-  picoRTOS_schedule();
-  (void)uart_write((struct uart*)arg, &c, sizeof(char));
-  picoRTOS_schedule();
-  
-  while(argc-- != 0){
-    (void)uart_write((struct uart*)arg, argv[argc], sizeof(char));
-    picoRTOS_schedule();
-  }
-
-  (void)uart_write((struct uart*)arg, "\r", sizeof(char));
-  picoRTOS_schedule();
-  (void)uart_write((struct uart*)arg, "\n", sizeof(char));
-
-   tcli_out_cb(arg, "wrong number of parameters\r\n");
-  
-#if 0
     if (argc != 3) {
-      tcli_out_cb(arg, "wrong number of parameters\r\n");
-      return -1;
+        tcli_out_cb(arg, "wrong number of parameters\r\n");
+        return -1;
     }
 
     tcli_out_cb(arg, "Parameter '");
@@ -63,28 +59,18 @@ static int cmd_set(void *arg, int argc, const char **argv)
     tcli_out_cb(arg, "' set to '");
     tcli_out_cb(arg, argv[2]);
     tcli_out_cb(arg, "'\r\n");
-#endif
+
     return 0;
 }
 
 int tcli_exec_cb(void *arg, int argc, const char **argv)
 {
-  if (strncmp("set", argv[0], (size_t)4) == 0){
-    return cmd_set(arg, argc, argv);
-#if 0
-    if (argc != 3) {
-      tcli_out_cb(arg, "wrong number of parameters\r\n");
-      return -1;
-    }
-    
-    tcli_out_cb(arg, "Parameter '");
-    tcli_out_cb(arg, argv[1]);
-    tcli_out_cb(arg, "' set to '");
-    tcli_out_cb(arg, argv[2]);
-    tcli_out_cb(arg, "'\r\n");
-    return 0;
-#endif
-  }
+#define STRNCMP_LITERAL(a, b) strncmp(a, b, sizeof(a))
+    if (STRNCMP_LITERAL("help", argv[0]) == 0) return cmd_help(arg);
+    if (STRNCMP_LITERAL("load", argv[0]) == 0) return cmd_load(arg);
+    if (STRNCMP_LITERAL("display", argv[0]) == 0) return cmd_display(arg);
+    if (STRNCMP_LITERAL("set", argv[0]) == 0) return cmd_set(arg, argc, argv);
+    if (STRNCMP_LITERAL("save", argv[0]) == 0) return cmd_save(arg);
 
     /* not found */
     tcli_out_cb(arg, "Command '");

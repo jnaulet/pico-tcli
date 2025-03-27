@@ -52,9 +52,8 @@ static void mux_init(void)
 
     (void)mux_stm32h7xx_init(&PORTA, ADDR_GPIOA);
 
-    (void)mux_stm32h7xx_alt(&PORTA, (size_t)1, (size_t)1);  /* LED */
-
-    (void)mux_stm32h7xx_alt(&PORTA, (size_t)10, (size_t)7);  /* USART1_RX */
+    (void)mux_stm32h7xx_output(&PORTA, (size_t)1);          /* LED */
+    (void)mux_stm32h7xx_alt(&PORTA, (size_t)10, (size_t)7); /* USART1_RX */
     (void)mux_stm32h7xx_alt(&PORTA, (size_t)9, (size_t)7);  /* USART1_TX */
 }
 
