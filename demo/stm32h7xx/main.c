@@ -35,8 +35,9 @@ void tcli_sigint_cb(void *arg)
 
 static int cmd_help(void *arg)
 {
-    tcli_out_cb(arg, "Help\r\n");
+    tcli_out_cb(arg, "\r\n");
     tcli_out_cb(arg, "Supported list of commands:\r\n");
+    tcli_out_cb(arg, "\r\n");
     tcli_out_cb(arg, " help   : displays this message\r\n");
     tcli_out_cb(arg, " load   : loads the configuration from EEPROM\r\n");
     tcli_out_cb(arg, " display: displays the current configuration\r\n");
@@ -45,6 +46,20 @@ static int cmd_help(void *arg)
     tcli_out_cb(arg, "          pwr_sel_in [0-1]: the default power-in selection\r\n");
     tcli_out_cb(arg, " save   : saves the configuration to EEPROM\r\n");
     tcli_out_cb(arg, "\r\n");
+
+    return 0;
+}
+
+static int cmd_load(void *arg)
+{
+  tcli_out_cb(arg, "Configuration loaded to RAM\r\n");
+  return 0;
+}
+
+static int cmd_display(void *arg)
+{
+  tcli_out_cb(arg, "Empty\r\n");
+  return 0;
 }
 
 static int cmd_set(void *arg, int argc, const char **argv)
@@ -61,6 +76,12 @@ static int cmd_set(void *arg, int argc, const char **argv)
     tcli_out_cb(arg, "'\r\n");
 
     return 0;
+}
+
+static int cmd_save(void *arg)
+{
+  tcli_out_cb(arg, "Configuration saved to EEPROM\r\n");
+  return 0;
 }
 
 int tcli_exec_cb(void *arg, int argc, const char **argv)
