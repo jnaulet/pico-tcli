@@ -516,8 +516,8 @@ static int tcli_itoa(int n, char *const str)
 }
 
 #if TCLI_COMPLETE
-size_t tcli_str_match(const char *const a, const char *const b,
-                      const size_t max_len)
+static size_t tcli_str_match(const char *const a, const char *const b,
+			     const size_t max_len)
 {
     if (a == b)
         return strnlen(a, max_len);
@@ -1102,13 +1102,13 @@ static size_t tcli_complete_match_overlap_len(const char **const matches,
 
     assert(match != NULL);
 
-    if (count == 1)
+    if (count == (size_t)1)
         return strlen(match);
 
     size_t match_len = SIZE_MAX;
 
-    for (size_t i = 1; i < count; i++) {
-        assert(matches[i]);
+    for (size_t i = (size_t)1; i < count; i++) {
+        assert(matches[i] != NULL);
         const size_t m = tcli_str_match(match, matches[i], match_len);
         if (m >= match_len)
             continue;
@@ -1123,7 +1123,8 @@ static size_t tcli_complete_match_overlap_len(const char **const matches,
 static size_t
 tcli_complete_match_tokenize(tcli_t *const tcli, const size_t cursor,
                              const char **const token, size_t *const token_len,
-                             const char **const tokens, const size_t max_tokens)
+                             /*@partial@*/ const char **const tokens,
+			     const size_t max_tokens)
 {
     TCLI_ASSERT(tcli);
     assert(token_len != 0);
@@ -1142,7 +1143,7 @@ tcli_complete_match_tokenize(tcli_t *const tcli, const size_t cursor,
 
     while (match_index != 0) {
         const char *const t = tokens[--match_index];
-        assert(t);
+        assert(t != NULL);
         if (tcli->cmdline.buf + cursor >= t) {
             *token = t;
             break;
@@ -1154,7 +1155,7 @@ tcli_complete_match_tokenize(tcli_t *const tcli, const size_t cursor,
         size_t end_index = token_count;
         while (end_index > match_index + 1) {
             const char *const t = tokens[--end_index];
-            assert(t);
+            assert(t != NULL);
             if (tcli->cmdline.buf + cursor >= t) {
                 end_token = t;
                 break;
@@ -1193,7 +1194,7 @@ static size_t tcli_complete_match_complete(tcli_t *const tcli,
     if (token_count == 0 || max_completions == 0)
         return 0;
 
-    assert(token_count <= INT_MAX);
+    assert(token_count <= (size_t)INT_MAX);
     size_t completion_count =
         tcli_complete_cb(tcli->arg, (int)token_count, tokens, token,
                          completions, max_completions);
@@ -1203,7 +1204,7 @@ static size_t tcli_complete_match_complete(tcli_t *const tcli,
     size_t valid_completion_count = 0;
 
     for (size_t i = 0; i < completion_count; i++) {
-        if (!completions[i])
+        if (completions[i] == NULL)
             continue;
 
         const char *c = completions[i];
@@ -1219,7 +1220,7 @@ static size_t tcli_complete_match_complete(tcli_t *const tcli,
 
 static size_t tcli_complete_match(tcli_t *const tcli, const char **const token,
                                   size_t *const token_len,
-                                  const char **const matches,
+                                  /*@partial@*/ const char **const matches,
                                   const size_t max_matches,
                                   size_t *const match_len)
 {
@@ -1242,7 +1243,7 @@ static size_t tcli_complete_match(tcli_t *const tcli, const char **const token,
     assert(cursor <= tcli->cmdline.len && cursor <= tcli->cmdline.cursor);
 
     // Split tokens
-    const char *tokens[TCLI_MAX_TOKENS] = { NULL };
+    const char *tokens[TCLI_MAX_TOKENS];
     const size_t token_count = tcli_complete_match_tokenize(
         tcli, cursor, token, token_len, tokens, TCLI_ARRAY_SIZE(tokens));
 
@@ -1301,7 +1302,7 @@ static void tcli_complete_apply(tcli_t *const tcli, const char *const token,
 
     if (append_space) {
         post_move++;
-        tcli_insert(tcli, " ", 1, false);
+        tcli_insert(tcli, " ", (size_t)1, false);
     }
 
     tcli_term_move_cursor_backward(tcli, pre_move);
@@ -1390,7 +1391,7 @@ static void tcli_complete(tcli_t *const tcli, const bool select)
 {
     TCLI_ASSERT(tcli);
 
-    if (tcli->cmdline.len == TCLI_CMDLINE_MAX_LEN)
+    if (tcli->cmdline.len == (size_t)TCLI_CMDLINE_MAX_LEN)
         return;
 
     if (tcli->echo.mode != TCLI_ECHO_ON)
@@ -1398,7 +1399,7 @@ static void tcli_complete(tcli_t *const tcli, const bool select)
 
     const char *token = NULL;
     size_t token_len = 0;
-    const char *matches[TCLI_MAX_TOKENS] = { NULL };
+    const char *matches[TCLI_MAX_TOKENS];
     size_t match_len = 0;
     const size_t match_count =
         tcli_complete_match(tcli, &token, &token_len, matches,
@@ -1409,7 +1410,7 @@ static void tcli_complete(tcli_t *const tcli, const bool select)
 
     assert(matches[0] != NULL);
     assert(token != NULL);
-    const bool single_match = match_count == 1;
+    const bool single_match = (match_count == (size_t)1);
 
     if (!tcli->complete.active) {
         const bool space_at_cursor =
