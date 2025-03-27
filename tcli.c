@@ -1893,6 +1893,8 @@ void tcli_init(tcli_t *const tcli, void *const arg)
 #if TCLI_HISTORY_BUF_LEN > 0
     tcli->hist.search_prompt = TCLI_DEFAULT_SEARCH_PROMPT;
 #endif
+    tcli_term_reprint_all(tcli);
+    tcli_flush(tcli);
 }
 
 void tcli_log(tcli_t *const tcli, const char *const str)
